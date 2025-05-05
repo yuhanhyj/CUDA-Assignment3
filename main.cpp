@@ -22,7 +22,7 @@ void   outputResultsCpu(const std::vector<std::vector<float>>&  resultsFloatCpu,
 int    parseArguments(int argc, char** argv);
 void   printUsage(void);
 
-bool         verbose, timing, cpu;
+bool         verbose, timing, cpu, gpu;
 int          maxIterations;
 unsigned int n, numberOfSamples;
 double       a, b; // The interval that we are going to use
@@ -30,6 +30,7 @@ double       a, b; // The interval that we are going to use
 int main(int argc, char* argv[]) {
   unsigned int ui, uj;
   cpu     = true;
+  gpu     = true;
   verbose = false;
   timing  = false;
   // n is the maximum order of the exponential integral that we are going to
@@ -258,6 +259,7 @@ int parseArguments(int argc, char* argv[]) {
   while ((c = getopt(argc, argv, "cghn:m:a:b:tv")) != -1) {
     switch (c) {
       case 'c': cpu = false; break; // Skip the CPU test
+      case 'g': gpu = false; break; // Skip the GPU test
       case 'h':
         printUsage();
         exit(0);
