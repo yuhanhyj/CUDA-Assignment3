@@ -143,6 +143,23 @@ int main(int argc, char* argv[]) {
 
     timeTotalGpu = timeFloatGpu + timeDoubleGpu;
   }
+
+  if (cpu && gpu) {
+    for (int i = 0; i < resultsFloatCpu.size(); i++) {
+      for (int j = 0; j < resultsFloatCpu[i].size(); j++) {
+        if (std::abs(resultsFloatCpu[i][j] - resultsFloatGpu[i][j]) > 1e-5) {
+          printf("Error: resultsFloatCpu[%d][%d] != resultsFloatGpu[%d][%d]\n",
+                 i, j, i, j);
+        }
+        if (std::abs(resultsDoubleCpu[i][j] - resultsDoubleGpu[i][j]) > 1e-5) {
+          printf(
+              "Error: resultsDoubleCpu[%d][%d] != resultsDoubleGpu[%d][%d]\n",
+              i, j, i, j);
+        }
+      }
+    }
+  }
+
   if (timing) {
     if (cpu) {
       printf("calculating the exponentials on the cpu took: %f seconds\n",
