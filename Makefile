@@ -1,18 +1,23 @@
 CC=g++
-#CFLAGS= -g -pedantic -W -Wall -L/usr/lib
 CFLAGS= -O3 -finline-functions -ffast-math -fomit-frame-pointer -funroll-loops
+
+NVCC=nvcc
+NVCCFLAGS=-O3 -arch=compute_80 -code=sm_80 -lcudart
 
 INCPATH       = -I.
 
-TARGET=main.o
+TARGET=main.o exponentialIntegralGPU.o
 EXEC=exponentialIntegral.out
 
 
 all: $(TARGET)
-	$(CC) -Wall -o ${EXEC} ${TARGET}
+	$(NVCC) ${NVCCFLAGS} -o ${EXEC} ${TARGET}
 
-%.o: %.cpp Makefile
+%.o: %.cpp
 	$(CC) $(CFLAGS) -c $(INCPATH) $<
+
+%.o: %.cu
+	$(NVCC) $(NVCCFLAGS) -c $(INCPATH) $<
 
 install:
 

@@ -13,12 +13,16 @@
 #include <unistd.h>
 #include <vector>
 
+#include "exponentialIntegralGPU.h"
+
 using namespace std;
 
 float  exponentialIntegralFloat(const int n, const float x);
 double exponentialIntegralDouble(const int n, const double x);
 void   outputResultsCpu(const std::vector<std::vector<float>>&  resultsFloatCpu,
                         const std::vector<std::vector<double>>& resultsDoubleCpu);
+void   outputResultsGpu(const std::vector<std::vector<float>>&  resultsFloatGpu,
+                        const std::vector<std::vector<double>>& resultsDoubleGpu);
 int    parseArguments(int argc, char** argv);
 void   printUsage(void);
 
@@ -41,6 +45,7 @@ int main(int argc, char* argv[]) {
   a               = 0.0;
   b               = 10.0;
   maxIterations   = 2000000000;
+  int block_size  = 256;
 
   struct timeval expoStart, expoEnd;
 
@@ -73,8 +78,13 @@ int main(int argc, char* argv[]) {
 
   std::vector<std::vector<float>>  resultsFloatCpu;
   std::vector<std::vector<double>> resultsDoubleCpu;
+  std::vector<std::vector<float>>  resultsFloatGpu;
+  std::vector<std::vector<double>> resultsDoubleGpu;
 
   double timeTotalCpu = 0.0;
+  double timeTotalGpu = 0.0, timeFloatGpu = 0.0, timeDoubleGpu = 0.0;
+  float  cuda_float_timings[5]  = {0};
+  float  cuda_double_timings[5] = {0};
 
   try {
     resultsFloatCpu.resize(n, vector<float>(numberOfSamples));
@@ -86,6 +96,18 @@ int main(int argc, char* argv[]) {
     resultsDoubleCpu.resize(n, vector<double>(numberOfSamples));
   } catch (std::bad_alloc const&) {
     cout << "resultsDoubleCpu memory allocation fail!" << endl;
+    exit(1);
+  }
+  try {
+    resultsFloatGpu.resize(n, vector<float>(numberOfSamples));
+  } catch (std::bad_alloc const&) {
+    cout << "resultsFloatGpu memory allocation fail!" << endl;
+    exit(1);
+  }
+  try {
+    resultsDoubleGpu.resize(n, vector<double>(numberOfSamples));
+  } catch (std::bad_alloc const&) {
+    cout << "resultsDoubleGpu memory allocation fail!" << endl;
     exit(1);
   }
 
@@ -104,17 +126,43 @@ int main(int argc, char* argv[]) {
     timeTotalCpu = ((expoEnd.tv_sec + expoEnd.tv_usec * 0.000001) -
                     (expoStart.tv_sec + expoStart.tv_usec * 0.000001));
   }
+  if (gpu) {
+    gettimeofday(&expoStart, NULL);
+    exponentialIntegralGpu(numberOfSamples, n, a, division, resultsFloatGpu,
+                           block_size, cuda_float_timings);
+    gettimeofday(&expoEnd, NULL);
+    timeFloatGpu = ((expoEnd.tv_sec + expoEnd.tv_usec * 0.000001) -
+                    (expoStart.tv_sec + expoStart.tv_usec * 0.000001));
 
+    gettimeofday(&expoStart, NULL);
+    exponentialIntegralGpu(numberOfSamples, n, a, division, resultsDoubleCpu,
+                           block_size, cuda_double_timings);
+    gettimeofday(&expoEnd, NULL);
+    timeDoubleGpu = ((expoEnd.tv_sec + expoEnd.tv_usec * 0.000001) -
+                     (expoStart.tv_sec + expoStart.tv_usec * 0.000001));
+
+    timeTotalGpu = timeFloatGpu + timeDoubleGpu;
+  }
   if (timing) {
     if (cpu) {
       printf("calculating the exponentials on the cpu took: %f seconds\n",
              timeTotalCpu);
+    }
+    if (gpu) {
+      printf("calculating the exponentials on the gpu took: %f seconds\n",
+             timeTotalGpu);
+    }
+    if (cpu && gpu) {
+      printf("SpeedUP: %f\n", timeTotalCpu / timeTotalGpu);
     }
   }
 
   if (verbose) {
     if (cpu) {
       outputResultsCpu(resultsFloatCpu, resultsDoubleCpu);
+    }
+    if (gpu) {
+      outputResultsGpu(resultsFloatGpu, resultsDoubleGpu);
     }
   }
   return 0;
@@ -136,6 +184,24 @@ void outputResultsCpu(
     }
   }
 }
+
+void outputResultsGpu(
+    const std::vector<std::vector<float>>&  resultsFloatGpu,
+    const std::vector<std::vector<double>>& resultsDoubleGpu) {
+  unsigned int ui, uj;
+  double       x, division = (b - a) / ((double) (numberOfSamples));
+
+  for (ui = 1; ui <= n; ui++) {
+    for (uj = 1; uj <= numberOfSamples; uj++) {
+      x = a + uj * division;
+      std::cout << "GPU==> exponentialIntegralDoubleGpu (" << ui << "," << x
+                << ")=" << resultsDoubleGpu[ui - 1][uj - 1] << " ,";
+      std::cout << "exponentialIntegralFloatGpu  (" << ui << "," << x
+                << ")=" << resultsFloatGpu[ui - 1][uj - 1] << endl;
+    }
+  }
+}
+
 double exponentialIntegralDouble(const int n, const double x) {
   static const double eulerConstant = 0.5772156649015329;
   double              epsilon       = 1.E-30;
