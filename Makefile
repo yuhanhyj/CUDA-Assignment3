@@ -22,4 +22,4 @@ all: $(TARGET)
 install:
 
 clean:
-	rm -f *.o ${TARGET}
+	rm -f *.o ${TARGET} ${EXEC}

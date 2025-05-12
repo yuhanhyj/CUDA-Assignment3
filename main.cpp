@@ -128,15 +128,15 @@ int main(int argc, char* argv[]) {
   }
   if (gpu) {
     gettimeofday(&expoStart, NULL);
-    exponentialIntegralGpu(numberOfSamples, n, a, division, resultsFloatGpu,
-                           block_size, cuda_float_timings);
+    exponentialIntegralGpu(numberOfSamples, n, a, division, maxIterations,
+                           resultsFloatGpu, block_size, cuda_float_timings);
     gettimeofday(&expoEnd, NULL);
     timeFloatGpu = ((expoEnd.tv_sec + expoEnd.tv_usec * 0.000001) -
                     (expoStart.tv_sec + expoStart.tv_usec * 0.000001));
 
     gettimeofday(&expoStart, NULL);
-    exponentialIntegralGpu(numberOfSamples, n, a, division, resultsDoubleCpu,
-                           block_size, cuda_double_timings);
+    exponentialIntegralGpu(numberOfSamples, n, a, division, maxIterations,
+                           resultsDoubleCpu, block_size, cuda_double_timings);
     gettimeofday(&expoEnd, NULL);
     timeDoubleGpu = ((expoEnd.tv_sec + expoEnd.tv_usec * 0.000001) -
                      (expoStart.tv_sec + expoStart.tv_usec * 0.000001));
