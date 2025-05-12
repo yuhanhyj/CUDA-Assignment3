@@ -6,15 +6,13 @@
 extern void exponentialIntegralGpu(const unsigned int numberOfSamples,
                                    const unsigned int n, const double a,
                                    const double division,
-                                   const int    maxIterations,
-                                   std::vector<std::vector<float>>& resultsGpu,
+                                   const int maxIterations, float* resultsGpu,
                                    const int block_size, float timings[5]);
 
 extern void exponentialIntegralGpu(const unsigned int numberOfSamples,
                                    const unsigned int n, const double a,
                                    const double division,
-                                   const int    maxIterations,
-                                   std::vector<std::vector<double>>& resultsGpu,
+                                   const int maxIterations, double* resultsGpu,
                                    const int block_size, float timings[5]);
 
 #endif // _EXPONENTIALINTEGRALGPU_H_
