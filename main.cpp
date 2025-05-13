@@ -50,6 +50,13 @@ int main(int argc, char* argv[]) {
   struct timeval expoStart, expoEnd;
 
   parseArguments(argc, argv);
+  if (n * numberOfSamples <= 2000 * 2000) {
+    block_size = 64;
+  } else if (n * numberOfSamples <= 10000 * 10000) {
+    block_size = 128;
+  }
+
+  printf("block_size = %d\n", block_size);
 
   if (verbose) {
     cout << "n=" << n << endl;

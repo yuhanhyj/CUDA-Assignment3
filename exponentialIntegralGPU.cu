@@ -3,16 +3,16 @@
 
 #include <cstdio>
 
-const int row_per_batch = 1024;
+const int row_per_batch = 512;
 
 template <typename T>
-__device__ T exponentialIntegral(const int n, const T x,
-                                 const int maxIterations) {
-  static const double eulerConstant = 0.5772156649015329;
-  double              epsilon       = 1.E-30;
-  double              bigDouble     = 1.0e300;
-  int                 i, ii, nm1 = n - 1;
-  T                   a, b, c, d, del, fact, h, psi, ans = 0.0;
+__device__ __forceinline__ T exponentialIntegral(const int n, const T x,
+                                                 const int maxIterations) {
+  double eulerConstant = 0.5772156649015329;
+  double epsilon       = 1.E-30;
+  double bigDouble     = 1.0e100;
+  int    i, ii, nm1 = n - 1;
+  T      a, b, c, d, del, fact, h, psi, ans = 0.0;
 
   if (n < 0 || x < 0 || (x == 0.0 && ((n == 0) || (n == 1)))) {
     return NAN;
