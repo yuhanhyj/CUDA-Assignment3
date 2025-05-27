@@ -30,6 +30,7 @@ bool         verbose, timing, cpu, gpu;
 int          maxIterations;
 unsigned int n, numberOfSamples;
 double       a, b; // The interval that we are going to use
+int          stream_num;
 
 int main(int argc, char* argv[]) {
   unsigned int ui, uj;
@@ -46,6 +47,7 @@ int main(int argc, char* argv[]) {
   b               = 10.0;
   maxIterations   = 2000000000;
   int block_size  = 256;
+  stream_num      = 1;
 
   struct timeval expoStart, expoEnd;
 
@@ -55,8 +57,6 @@ int main(int argc, char* argv[]) {
   } else if (n * numberOfSamples <= 10000 * 10000) {
     block_size = 128;
   }
-
-  printf("block_size = %d\n", block_size);
 
   if (verbose) {
     cout << "n=" << n << endl;
@@ -82,6 +82,11 @@ int main(int argc, char* argv[]) {
          << ") have been stated!" << endl;
     return 0;
   }
+  if (stream_num > CUDA_STREAMS_MAX) {
+    cout << "Incorrect number of streams (" << stream_num
+         << ") have been stated!" << endl;
+    return 0;
+  }
 
   std::vector<std::vector<float>>  resultsFloatCpu;
   std::vector<std::vector<double>> resultsDoubleCpu;
@@ -89,8 +94,8 @@ int main(int argc, char* argv[]) {
   double*                          resultsDoubleGpu;
   double                           timeTotalCpu = 0.0;
   double timeTotalGpu = 0.0, timeFloatGpu = 0.0, timeDoubleGpu = 0.0;
-  float  cuda_float_timings[5]  = {0};
-  float  cuda_double_timings[5] = {0};
+  float  cuda_float_timings[CUDA_STREAMS_MAX]  = {0};
+  float  cuda_double_timings[CUDA_STREAMS_MAX] = {0};
 
   try {
     resultsFloatCpu.resize(n, vector<float>(numberOfSamples));
@@ -134,17 +139,18 @@ int main(int argc, char* argv[]) {
   }
 
   if (gpu) {
-
     gettimeofday(&expoStart, NULL);
     exponentialIntegralGpu(numberOfSamples, n, a, division, maxIterations,
-                           resultsFloatGpu, block_size, cuda_float_timings);
+                           resultsFloatGpu, block_size, stream_num,
+                           cuda_float_timings);
     gettimeofday(&expoEnd, NULL);
     timeFloatGpu = ((expoEnd.tv_sec + expoEnd.tv_usec * 0.000001) -
                     (expoStart.tv_sec + expoStart.tv_usec * 0.000001));
 
     gettimeofday(&expoStart, NULL);
     exponentialIntegralGpu(numberOfSamples, n, a, division, maxIterations,
-                           resultsDoubleGpu, block_size, cuda_double_timings);
+                           resultsDoubleGpu, block_size, stream_num,
+                           cuda_double_timings);
     gettimeofday(&expoEnd, NULL);
     timeDoubleGpu = ((expoEnd.tv_sec + expoEnd.tv_usec * 0.000001) -
                      (expoStart.tv_sec + expoStart.tv_usec * 0.000001));
@@ -360,7 +366,7 @@ float exponentialIntegralFloat(const int n, const float x) {
 int parseArguments(int argc, char* argv[]) {
   int c;
 
-  while ((c = getopt(argc, argv, "cghn:m:a:b:tv")) != -1) {
+  while ((c = getopt(argc, argv, "cghn:m:s:a:b:tv")) != -1) {
     switch (c) {
       case 'c': cpu = false; break; // Skip the CPU test
       case 'g': gpu = false; break; // Skip the GPU test
@@ -375,6 +381,7 @@ int parseArguments(int argc, char* argv[]) {
       case 'b': b = atof(optarg); break;
       case 't': timing = true; break;
       case 'v': verbose = true; break;
+      case 's': stream_num = atoi(optarg); break;
       default:
         fprintf(stderr, "Invalid option given\n");
         printUsage();
@@ -406,5 +413,6 @@ void printUsage() {
          "generate each norm (default: no)\n");
   printf(
       "      -v           : will activate the verbose mode  (default: no)\n");
+  printf("      -s           : will set the cuda stream num (default: 1)\n");
   printf("     \n");
 }

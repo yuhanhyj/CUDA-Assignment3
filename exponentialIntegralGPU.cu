@@ -86,7 +86,8 @@ void exponentialIntegralGpu(const unsigned int numberOfSamples,
                             const unsigned int n, const double a,
                             const double division, const int maxIterations,
                             float* resultsGpu, const int block_size,
-                            float timings[5]) {
+                            const int stream_num,
+                            float     timings[CUDA_STREAMS_MAX]) {
 
   TIME_INIT();
 
@@ -102,10 +103,28 @@ void exponentialIntegralGpu(const unsigned int numberOfSamples,
   TIME_END();
 
   TIME_START();
-  for (int start_row = 0; start_row < n; start_row += row_per_batch) {
-    exponential_integral_kernel<<<grid_size, block_size>>>(
-        a, division, maxIterations, blocks_per_col, start_row, n,
-        numberOfSamples, results_gpu);
+  if (stream_num > 1) {
+    cudaStream_t streams[stream_num];
+    for (int i = 0; i < stream_num; i++) {
+      CHECK_CUDA(cudaStreamCreate(&streams[i]));
+    }
+
+    for (int start_row = 0; start_row < n;
+         start_row += stream_num * row_per_batch) {
+      for (int i = 0; i < stream_num; i++)
+        exponential_integral_kernel<<<grid_size, block_size, 0, streams[i]>>>(
+            a, division, maxIterations, blocks_per_col,
+            start_row + i * row_per_batch, n, numberOfSamples, results_gpu);
+    }
+    for (int i = 0; i < stream_num; i++) {
+      CHECK_CUDA(cudaStreamSynchronize(streams[i]));
+    }
+  } else {
+    for (int start_row = 0; start_row < n; start_row += row_per_batch) {
+      exponential_integral_kernel<<<grid_size, block_size>>>(
+          a, division, maxIterations, blocks_per_col, start_row, n,
+          numberOfSamples, results_gpu);
+    }
   }
   TIME_END();
 
@@ -126,7 +145,8 @@ void exponentialIntegralGpu(const unsigned int numberOfSamples,
                             const unsigned int n, const double a,
                             const double division, const int maxIterations,
                             double* resultsGpu, const int block_size,
-                            float timings[5]) {
+                            const int stream_num,
+                            float     timings[CUDA_STREAMS_MAX]) {
   TIME_INIT();
 
   TIME_START();
@@ -141,11 +161,29 @@ void exponentialIntegralGpu(const unsigned int numberOfSamples,
   TIME_END();
 
   TIME_START();
-  for (int start_row = 0; start_row < n; start_row += row_per_batch) {
-    exponential_integral_kernel<<<grid_size, block_size>>>(
-        a, division, maxIterations, blocks_per_col, start_row, n,
-        numberOfSamples, results_gpu);
+  if (stream_num > 1) {
+    cudaStream_t streams[stream_num];
+    for (int i = 0; i < stream_num; i++) {
+      CHECK_CUDA(cudaStreamCreate(&streams[i]));
+    }
+    for (int start_row = 0; start_row < n;
+         start_row += stream_num * row_per_batch) {
+      for (int i = 0; i < stream_num; i++)
+        exponential_integral_kernel<<<grid_size, block_size, 0, streams[i]>>>(
+            a, division, maxIterations, blocks_per_col,
+            start_row + i * row_per_batch, n, numberOfSamples, results_gpu);
+    }
+    for (int i = 0; i < stream_num; i++) {
+      CHECK_CUDA(cudaStreamDestroy(streams[i]));
+    }
+  } else {
+    for (int start_row = 0; start_row < n; start_row += row_per_batch) {
+      exponential_integral_kernel<<<grid_size, block_size>>>(
+          a, division, maxIterations, blocks_per_col, start_row, n,
+          numberOfSamples, results_gpu);
+    }
   }
+
   TIME_END();
 
   TIME_START();
