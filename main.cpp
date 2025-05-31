@@ -186,7 +186,18 @@ int main(int argc, char* argv[]) {
     }
     if (gpu) {
       printf("float on the gpu took: %f seconds\n", timeFloatGpu);
+      printf("GPU float timings:\n");
+      printf("  Grid/Block calculation: %f seconds\n", cuda_float_timings[0]);
+      printf("  cudaMalloc: %f seconds\n", cuda_float_timings[1]);
+      printf("  Kernel execution: %f seconds\n", cuda_float_timings[2]);
+      printf("  cudaMemcpy DtoH: %f seconds\n", cuda_float_timings[3]);
+
       printf("double on the gpu took: %f seconds\n", timeDoubleGpu);
+      printf("GPU double timings:\n");
+      printf("  Grid/Block calculation: %f seconds\n", cuda_double_timings[0]);
+      printf("  cudaMalloc: %f seconds\n", cuda_double_timings[1]);
+      printf("  Kernel execution: %f seconds\n", cuda_double_timings[2]);
+      printf("  cudaMemcpy DtoH: %f seconds\n", cuda_double_timings[3]);
       printf("calculating the exponentials on the gpu took: %f seconds\n",
              timeTotalGpu);
     }
