@@ -71,4 +71,35 @@ Run the program from the command line, specifying options as needed.
 
 ## Performance Results
 
-The following table will present the performance results for various problem sizes and stream configurations. The speedup is calculated as (Total CPU Time / Total GPU Time).
+The following sections present the performance results for various problem sizes and stream configurations. The speedup is calculated as (Total CPU Time / GPU Time) for each precision level.
+
+### Scalability Analysis
+
+This table shows how performance scales as the problem size (`n` x `m`) increases for different kernel block sizes. All runs were performed with a single CUDA stream (`-s 1`).
+
+| Block Size | `n` | `m` | CPU Time (s) | GPU Float Time (s) | GPU Double Time (s) | Speedup (vs. Float) | Speedup (vs. Double) |
+|:----------:|:---:|:---:|:------------:|:------------------:|:-------------------:|:-------------------:|:--------------------:|
+| **256** | 5000 | 5000 | 4.64 | 0.31 | 0.25 | 14.97x | 18.56x |
+| **256** | 8192 | 8192 | 12.14 | 0.38 | 0.48 | 31.95x | 25.29x |
+| **256** | 16384 | 16384 | 46.81 | 0.78 | 2.70 | 60.01x | 17.34x |
+| **256** | 20000 | 20000 | 72.73 | 1.02 | 3.51 | 71.30x | 20.72x |
+| **512** | 5000 | 5000 | 4.64 | 0.32 | 0.27 | 14.50x | 17.18x |
+| **512** | 8192 | 8192 | 12.17 | 0.38 | 0.50 | 31.92x | 24.34x |
+| **512** | 16384 | 16384 | 46.86 | 0.79 | 2.68 | 59.32x | 17.48x |
+| **512** | 20000 | 20000 | 68.96 | 1.02 | 3.48 | 67.61x | 19.82x |
+
+**Analysis**: As the problem size increases, the speedup gained from GPU acceleration becomes significantly more pronounced, especially for single-precision (`float`) calculations. This is expected, as larger workloads are able to better saturate the parallel processing capabilities of the GPU. Comparing the two block sizes, there is no significant performance difference for this particular problem and hardware, suggesting that both 256 and 512 are effective choices.
+
+### Stream Performance Analysis
+
+This table shows the impact of using multiple CUDA streams on the largest problem size (`n=20000`, `m=20000`). These tests were all conducted with a **block size of 256**.
+
+| Streams (`-s`) | CPU Time (s) | GPU Float Time (s) | GPU Double Time (s) | Speedup (vs. Float) | Speedup (vs. Double) |
+|:--------------:|:------------:|:------------------:|:-------------------:|:-------------------:|:--------------------:|
+| 1 | 68.94 | 1.02 | 3.50 | 67.59x | 19.70x |
+| 2 | 71.33 | 1.02 | 3.27 | 69.93x | 21.81x |
+| 3 | 68.93 | 1.02 | 3.25 | 67.58x | 21.21x |
+| 4 | 69.16 | 1.00 | 3.25 | 69.16x | 21.28x |
+| 5 | 68.92 | 1.00 | 3.27 | 68.92x | 21.08x |
+
+**Analysis**: Using multiple streams provides a modest performance improvement for double-precision calculations, with the best speedup observed at 2 streams. For single-precision, the kernel execution time is already very fast, so the benefits of overlapping execution with multiple streams are minimal. This suggests that for this specific problem, the computation is not complex enough to fully leverage the advantages of stream-based parallelism beyond 2-4 streams.
