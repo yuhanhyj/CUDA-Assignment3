@@ -2,7 +2,7 @@ CC=g++
 CFLAGS= -O3 -finline-functions -ffast-math -fomit-frame-pointer -funroll-loops
 
 NVCC=nvcc
-NVCCFLAGS=-O3 -arch=compute_80 -code=sm_80 -lcudart
+NVCCFLAGS=-O3 -arch=compute_75 -code=sm_75 -lcudart
 
 INCPATH       = -I.
 
