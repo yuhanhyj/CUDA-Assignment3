@@ -124,6 +124,7 @@ int  parseArguments(int argc, char* argv[]);
 void printUsage(void);
 
 int main(int argc, char* argv[]) {
+  printf("--- THIS IS THE NEW VERSION ---\n");
   cpu             = true;
   gpu             = true;
   verbose         = false;
@@ -132,7 +133,7 @@ int main(int argc, char* argv[]) {
   numberOfSamples = 10;
   a               = 0.0;
   b               = 10.0;
-  maxIterations   = 50000;
+  maxIterations   = 2000000000;
 
   parseArguments(argc, argv);
   unsigned int total = n * numberOfSamples;

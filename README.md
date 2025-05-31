@@ -116,3 +116,18 @@ The main differences are as follows:
 * **Data Precision**: A key requirement was support for both single (`float`) and double (`double`) precision. My implementation correctly handles both data types, whereas the LLM's code was limited to `float` only.
 * **Advanced Features**: I implemented CUDA streams to leverage potential performance gains from overlapping GPU operations. The LLM's solution did not include any use of CUDA streams and relied on default, synchronous execution.
 * **Performance Analysis**: To properly evaluate performance, my implementation includes detailed timing for individual GPU operations (memory allocation, kernel execution, and data transfers). The LLM's version only offered a high-level timer for the total execution.
+
+I also noticed that the CPU part was significantly quicker which was surprising but turns out, the max iterations was set to 50 000 as opposed to 2 000 000 000. I changed this for the next part which follows, but, there was no difference in execution time for the CPU or GPU version which was confusing.
+
+```sh
+yuhan@cuda01:~/CUDA-Assignment3/llm$ ./exponentialIntegral -t -n 20000 -m 20000
+--- THIS IS THE NEW VERSION ---
+CPU time: 11.500062 seconds
+GPU time: 0.277439 seconds
+```
+
+Note that I added the `--- THIS IS THE NEW VERSION ---` part since I considered compilation as being a problem, which it wasn't. The GPU code is significantly quicker than my version.
+
+In any case, the reason why (I think) the LLM (CPU) version is quicker is because it does not have the added overhead of calculating double-precision at the same time as single-precision. For each sample, my version calculates the `float` and `double` versions of the exponential integral for every sample, whereas the LLM version only calculates the `float` version. This is why the CPU timings cannot be compared effectively.
+
+Note that the LLM version does not automatically check if the difference is larger than a certain threshold and print an error message if the CPU and GPU versions differ. One must specify the `-v` flag and it will print out the difference for every sample and value. This does not mean the generated solution is incorrect, however, as on closer inspection, the `__device__` function `exponentialIntegralFloatGPU` seems to use the exact same mathematical logic and convergence tests as the `exponentialIntegralFloatCPU` function.
